@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>Students list</title>
+</head>
+<body>
+
+<a href="/add">Add new student</a>
+<a href="/tasks">Tasks reports</a>
+
+<p>We have these students:
+<table border=1>
+    <#list attrList["students"] as student>
+        <tr>
+            <td>${student.name}<td>${student.surname}<td>${student.birthday}<td>${student.group}<td>${student.mark}
+            <td><a href="/edit?id=${student.id}">Edit</a>
+            <td><a href="/delete?id=${student.id}">Delete</a>
+    </#list>
+</table>
+
+</body>
+</html>
