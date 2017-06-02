@@ -7,8 +7,8 @@
 </head>
 <body>
 
-<form action="/delete?id=${id}" method="POST">
-    <p>Do you want to delete "${name} ${surname}, ${birthday}"?
+<form action="/delete?id=${attrList.id}" method="POST">
+    <p>Do you want to delete "${attrList.name} ${attrList.surname}, ${attrList.birthday}"?
         <input type="radio" name="delete" value="Yes" checked/>Yes
         <input type="radio" name="delete" value="No"/>No</p>
     <p><input type="submit" value="Ok"></p>

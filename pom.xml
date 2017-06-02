@@ -95,13 +95,13 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.7.3</version>
+            <version>3.9.1</version>
         </dependency>
 
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>2.3.23</version>
+            <version>RELEASE</version>
         </dependency>
 
         <dependency>
