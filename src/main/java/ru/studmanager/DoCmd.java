@@ -6,6 +6,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,14 +15,19 @@ import java.util.Map;
 
 import com.sun.tools.javac.util.Name;
 import db.generated.enums.StudentSex;
+import db.generated.tables.Abroad;
 import db.generated.tables.Assignment;
 import db.generated.tables.Enterprise;
 import db.generated.tables.GroupSt;
 import db.generated.tables.Payment;
+import db.generated.tables.Profession;
+import db.generated.tables.Relative;
 import db.generated.tables.Student;
+import db.generated.tables.SubFaculty;
 import db.generated.tables.VarAssignment;
 import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record3;
 import org.jooq.Record4;
@@ -41,6 +47,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import static org.jooq.impl.DSL.timestampDiff;
 import static ru.studmanager.Validation.*;
 
 @Controller
@@ -245,15 +252,103 @@ public class DoCmd {
 
         switch (id) {
             case 1:
-                result = dsl.select(Student.STUDENT.ID, Student.STUDENT.NAME, Student.STUDENT.SURNAME,
-                                Student.STUDENT.BIRTHDAY, GroupSt.GROUP_ST.NOMER, Student.STUDENT.MARK)
-                                .from(Student.STUDENT).join(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID)).fetchResultSet();
+                result = dsl.select(Student.STUDENT.NAME, Student.STUDENT.SURNAME, Student.STUDENT.MARK)
+                        .from(Student.STUDENT)
+                        .fetchResultSet();
+                break;
+            case 2:
+                result = dsl.select(Student.STUDENT.NAME, Student.STUDENT.SURNAME, GroupSt.GROUP_ST.NOMER, Student.STUDENT.MARK)
+                        .from(Student.STUDENT).join(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID)).fetchResultSet();
+                break;
+            case 3:
+                result = dsl.select(Student.STUDENT.NAME, Student.STUDENT.SURNAME,
+                        Student.STUDENT.BIRTHDAY, GroupSt.GROUP_ST.NOMER, Student.STUDENT.MARK)
+                        .from(Student.STUDENT).join(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID)).fetchResultSet();
+                break;
+            case 4:
+                result = dsl.select(Student.STUDENT.NAME, Student.STUDENT.SURNAME, GroupSt.GROUP_ST.NOMER, Student.STUDENT.MARK)
+                        .from(Student.STUDENT)
+                        .join(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID))
+                        .where(Student.STUDENT.NATIONALITY.notIn("Русский", "Русская"))
+                        .fetchResultSet();
+                break;
+            case 5:
+                result = dsl.select(DSL.count().as("students count")).from(Student.STUDENT).fetchResultSet();
+                break;
+            case 6:
+                result = dsl.select(DSL.count().as("good students count"))
+                        .from(Student.STUDENT)
+                        .where(Student.STUDENT.MARK.greaterThan(BigDecimal.valueOf(4L)))
+                        .fetchResultSet();
+                break;
+            case 7:
+                result = dsl.select(DSL.count().as("good feamle students count"))
+                        .from(Student.STUDENT)
+                        .where(Student.STUDENT.MARK.greaterThan(BigDecimal.valueOf(4L))
+                                .and(Student.STUDENT.SEX.eq(StudentSex.Female)))
+                        .fetchResultSet();
+                break;
+            case 8:
+                result = dsl.select(Student.STUDENT.MARK, DSL.count()).from(Student.STUDENT).groupBy(Student.STUDENT.MARK).fetchResultSet();
+                break;
+            case 9:
+                result = dsl.select(SubFaculty.SUB_FACULTY.NAME, DSL.count().as("prof count"))
+                        .from(Profession.PROFESSION)
+                        .leftJoin(SubFaculty.SUB_FACULTY).on(Profession.PROFESSION.SUB_FAC_ID.eq(SubFaculty.SUB_FACULTY.ID))
+                        .groupBy(SubFaculty.SUB_FACULTY.NAME)
+                        .fetchResultSet();
+                break;
+            case 10:
+                result = dsl.select(GroupSt.GROUP_ST.NOMER, DSL.round(DSL.avg(Student.STUDENT.MARK), 2).as("avg mark"))
+                        .from(Student.STUDENT)
+                        .leftJoin(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID))
+                        .groupBy(GroupSt.GROUP_ST.NOMER)
+                        .fetchResultSet();
+                break;
+            case 11:
+                result = dsl.select(Student.STUDENT.SURNAME, Student.STUDENT.NAME, DSL.count().as("relative count"))
+                        .from(Relative.RELATIVE)
+                        .leftJoin(Student.STUDENT).on(Relative.RELATIVE.STUD_ID.eq(Student.STUDENT.ID))
+                        .groupBy(Student.STUDENT.ID)
+                        .fetchResultSet();
+                break;
+            case 12:
+                // TODO: разобраться как привести таймстемп к годам
+                result = dsl.select(DSL.concat(DSL.concat(Student.STUDENT.SURNAME, " "),
+                                               DSL.substring(Student.STUDENT.NAME, 1, 1)).as("student"),
+                                               DSL.timestampDiff(DSL.timestamp(Student.STUDENT.BIRTHDAY), DSL.currentTimestamp()).as("age"))
+                        .from(Student.STUDENT).fetchResultSet();
+                break;
+            case 13:
+                // TODO: разобраться как привести таймстемп к годам
+                break;
+            case 14:
+                result = dsl.select(Student.STUDENT.SURNAME, Student.STUDENT.NAME)
+                        .from(Relative.RELATIVE)
+                        .leftJoin(Abroad.ABROAD).on(Abroad.ABROAD.REL_ID.eq(Relative.RELATIVE.ID))
+                        .leftJoin(Student.STUDENT).on(Student.STUDENT.ID.eq(Relative.RELATIVE.STUD_ID))
+                        .where(Abroad.ABROAD.ID.isNull()).groupBy(Student.STUDENT.ID).fetchResultSet();
+                break;
+            case 15:
+                Table<Record1<String>> nested = dsl.select(GroupSt.GROUP_ST.NOMER)
+                        .from(Relative.RELATIVE)
+                        .leftJoin(Abroad.ABROAD).on(Abroad.ABROAD.REL_ID.eq(Relative.RELATIVE.ID))
+                        .leftJoin(Student.STUDENT).on(Relative.RELATIVE.STUD_ID.eq(Student.STUDENT.ID))
+                        .leftJoin(GroupSt.GROUP_ST).on(GroupSt.GROUP_ST.ID.eq(Student.STUDENT.GROUP_ID))
+                        .where(Abroad.ABROAD.ID.isNull())
+                        .groupBy(Student.STUDENT.ID).asTable();
+                result = dsl.select(nested.field(0), DSL.count()).from(nested).groupBy(nested.field(0)).fetchResultSet();
                 break;
             case 16:
                 result = dsl.select(t1.field(0), t1.field(1), t1.field(2),DSL.ifnull(t2.field(1), 0).as("sum"))
                         .from(t1)
                         .leftJoin(t2).using(GroupSt.GROUP_ST.NOMER)
                         .fetchResultSet();
+                break;
+            case 17:
+                result = dsl.select(GroupSt.GROUP_ST.NOMER).from(GroupSt.GROUP_ST).where(GroupSt.GROUP_ST.NOMER.notIn(dsl.select(t1.field(2))
+                        .from(t1)
+                        .leftJoin(t2).using(GroupSt.GROUP_ST.NOMER).asField())).fetchResultSet();
                 break;
         }
 
