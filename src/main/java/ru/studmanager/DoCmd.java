@@ -1,19 +1,16 @@
 package ru.studmanager;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.sun.tools.javac.util.Name;
 import db.generated.enums.StudentSex;
 import db.generated.tables.Abroad;
 import db.generated.tables.Assignment;
@@ -36,7 +33,6 @@ import org.jooq.Record8;
 import org.jooq.Result;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
-import org.jooq.impl.NullIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,8 +43,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import static org.jooq.impl.DSL.timestampDiff;
-import static ru.studmanager.Validation.*;
+import static ru.studmanager.Validation.validateAddress;
+import static ru.studmanager.Validation.validateBirthday;
+import static ru.studmanager.Validation.validateGroupId;
+import static ru.studmanager.Validation.validateMark;
+import static ru.studmanager.Validation.validateName;
+import static ru.studmanager.Validation.validateNationality;
+import static ru.studmanager.Validation.validateSex;
+import static ru.studmanager.Validation.validateSurname;
 
 @Controller
 public class DoCmd {
