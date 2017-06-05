@@ -1,5 +1,6 @@
 package ru.studmanager;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.ResultSet;
@@ -11,15 +12,25 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sun.tools.javac.util.Name;
 import db.generated.enums.StudentSex;
+import db.generated.tables.Assignment;
+import db.generated.tables.Enterprise;
 import db.generated.tables.GroupSt;
+import db.generated.tables.Payment;
 import db.generated.tables.Student;
+import db.generated.tables.VarAssignment;
 import org.jooq.DSLContext;
 import org.jooq.Record;
+import org.jooq.Record2;
+import org.jooq.Record3;
 import org.jooq.Record4;
 import org.jooq.Record6;
 import org.jooq.Record8;
 import org.jooq.Result;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+import org.jooq.impl.NullIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -215,11 +226,34 @@ public class DoCmd {
         List<LinkedHashMap<String, Object>> records = new ArrayList<LinkedHashMap<String, Object>>();
         ResultSet result = null;
 
+        Table<Record3<String, String, String>> t1 =
+                dsl.select(Student.STUDENT.SURNAME, Enterprise.ENTERPRISE.NAME, GroupSt.GROUP_ST.NOMER)
+                        .from(Student.STUDENT)
+                        .leftJoin(VarAssignment.VAR_ASSIGNMENT).on(Student.STUDENT.ID.eq(VarAssignment.VAR_ASSIGNMENT.STUD_ID))
+                        .join(Assignment.ASSIGNMENT).on(VarAssignment.VAR_ASSIGNMENT.ID.eq(Assignment.ASSIGNMENT.VAR_ASSIG_ID))
+                        .leftJoin(Enterprise.ENTERPRISE).on(Enterprise.ENTERPRISE.ID.eq(VarAssignment.VAR_ASSIGNMENT.ENT_ID))
+                        .leftJoin(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID))
+                        .asTable();
+        Table<Record2<String, BigDecimal>> t2 =
+                dsl.select(GroupSt.GROUP_ST.NOMER, DSL.sum(Payment.PAYMENT.SUMMA).as("sum"))
+                        .from(Student.STUDENT)
+                        .leftJoin(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID))
+                        .leftJoin(VarAssignment.VAR_ASSIGNMENT).on(Student.STUDENT.ID.eq(VarAssignment.VAR_ASSIGNMENT.STUD_ID))
+                        .join(Assignment.ASSIGNMENT).on(VarAssignment.VAR_ASSIGNMENT.ID.eq(Assignment.ASSIGNMENT.VAR_ASSIG_ID))
+                        .leftJoin(Payment.PAYMENT).on(Payment.PAYMENT.ASSIG_ID.eq(Assignment.ASSIGNMENT.ID)).groupBy(GroupSt.GROUP_ST.NOMER)
+                        .asTable();
+
         switch (id) {
             case 1:
                 result = dsl.select(Student.STUDENT.ID, Student.STUDENT.NAME, Student.STUDENT.SURNAME,
                                 Student.STUDENT.BIRTHDAY, GroupSt.GROUP_ST.NOMER, Student.STUDENT.MARK)
                                 .from(Student.STUDENT).join(GroupSt.GROUP_ST).on(Student.STUDENT.GROUP_ID.eq(GroupSt.GROUP_ST.ID)).fetchResultSet();
+                break;
+            case 16:
+                result = dsl.select(t1.field(0), t1.field(1), t1.field(2),DSL.ifnull(t2.field(1), 0).as("sum"))
+                        .from(t1)
+                        .leftJoin(t2).using(GroupSt.GROUP_ST.NOMER)
+                        .fetchResultSet();
                 break;
         }
 
