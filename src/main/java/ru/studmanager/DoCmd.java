@@ -33,6 +33,7 @@ import org.jooq.Record8;
 import org.jooq.Result;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
+import org.jooq.types.DayToSecond;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -315,14 +316,18 @@ public class DoCmd {
                         .fetchResultSet();
                 break;
             case 12:
-                // TODO: разобраться как привести таймстемп к годам
                 result = dsl.select(DSL.concat(DSL.concat(Student.STUDENT.SURNAME, " "),
                                                DSL.substring(Student.STUDENT.NAME, 1, 1)).as("student"),
-                                               DSL.timestampDiff(DSL.timestamp(Student.STUDENT.BIRTHDAY), DSL.currentTimestamp()).as("age"))
+                                               DSL.floor(DSL.abs(DSL.timestampDiff(DSL.timestamp(Student.STUDENT.BIRTHDAY), DSL.currentTimestamp()).div(DSL.val(31536000000L)))).as("age"))
                         .from(Student.STUDENT).fetchResultSet();
                 break;
             case 13:
-                // TODO: разобраться как привести таймстемп к годам
+                result = dsl.select(DSL.count())
+                        .from(Student.STUDENT)
+                        .where(Student.STUDENT.MARK.between(BigDecimal.valueOf(3.00), BigDecimal.valueOf(3.50))
+                                .and(DSL.floor(DSL.abs(DSL.timestampDiff(DSL.timestamp(Student.STUDENT.BIRTHDAY), DSL.currentTimestamp()).div(DSL.val(31536000000L)))).greaterThan(
+                                        DayToSecond.valueOf(22))))
+                        .fetchResultSet();
                 break;
             case 14:
                 result = dsl.select(Student.STUDENT.SURNAME, Student.STUDENT.NAME)
